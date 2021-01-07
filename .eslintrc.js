@@ -14,7 +14,7 @@ module.exports = {
   },
   "rules": { 
     "semi": ["error", "always"],
-    "quotes": ["warn", "double"],
+    "quotes": ["warn", "double", {"avoidEscape": true}],
     "indent": ["error", 2],
     "no-unused-vars": ["warn", { "vars": "all", "args": "after-used", "ignoreRestSiblings": false }]
   },
