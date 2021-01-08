@@ -1,4 +1,7 @@
-const mongoose = require("mongoose"); //몽고스를 불러옴
+const mongoose = require("mongoose"); // mongoose를 불러옴
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const saltRounds = 10;
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -8,7 +11,7 @@ const userSchema = new mongoose.Schema({
 
   email: {
     type: String,
-    trim: true, //만약에 dong min@naver.com 이렇게 했을 때 스페이스가 있다 trim은 이 스페이스를 없애준다.
+    trim: true, // 스페이스 제거
     unique: 1, // 중복방지
   },
 
@@ -36,6 +39,49 @@ const userSchema = new mongoose.Schema({
   tokenExp: {
     type: Number,
   }, //토큰이 사용할 수 있는 기간을 주는 것
+});
+
+userSchema.pre("save", function(next) {
+
+  var user = this;
+
+  if(user.isModified("password")){
+
+    bcrypt.genSalt(saltRounds, (err, salt) => {
+      if(err) return next(err);
+  
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        if (err) return next(err);
+        user.password = hash;
+        next();
+      });
+    });
+
+  }else{
+    next();
+  }
+
+  userSchema.methods.comparePassword = (plainPassword, cb) => {
+    bcrypt.compare(plainPassword, this.password, (err, isMatch) => {
+      if(err) return cb(err);
+      cb(null, isMatch);
+    });
+  };
+
+  userSchema.methods.generateToken = (cb) => {
+    var user = this;
+
+    var token = jwt.sign(user._id.toHexString(), "secretToken");
+
+    user.token = token;
+    user.save( (err, user) => {
+      if(err) return cb(err);
+      cb(null, user);
+    });
+
+  };
+  
+
 });
 
 // 그 다음 이 스키마를 모델로 감싸준다고 하였다.
