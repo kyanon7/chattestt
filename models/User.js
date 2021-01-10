@@ -46,43 +46,49 @@ userSchema.pre("save", function(next) {
   var user = this;
 
   if(user.isModified("password")){
-
     bcrypt.genSalt(saltRounds, (err, salt) => {
-      if(err) return next(err);
-  
+      if(err) {
+        return next(err);
+      }
+
       bcrypt.hash(user.password, salt, (err, hash) => {
-        if (err) return next(err);
+        if(err) {
+          return next(err);
+        }
         user.password = hash;
         next();
+
       });
     });
 
   }else{
     next();
   }
-
-  userSchema.methods.comparePassword = (plainPassword, cb) => {
-    bcrypt.compare(plainPassword, this.password, (err, isMatch) => {
-      if(err) return cb(err);
-      cb(null, isMatch);
-    });
-  };
-
-  userSchema.methods.generateToken = (cb) => {
-    var user = this;
-
-    var token = jwt.sign(user._id.toHexString(), "secretToken");
-
-    user.token = token;
-    user.save( (err, user) => {
-      if(err) return cb(err);
-      cb(null, user);
-    });
-
-  };
-  
-
 });
+
+userSchema.methods.comparePassword = function(plainPassword, cb) {
+
+  bcrypt.compare(plainPassword, this.password, function(err, isMatch) {
+    if(err){
+      return cb(err);
+    }
+    cb(null, isMatch);
+  });
+};
+
+userSchema.methods.generateToken = function(cb) {
+  var user = this;
+
+  var token = jwt.sign(user._id.toHexString(), "secretToken");
+
+  user.token = token;
+  user.save(function(err, user) {
+    if(err){
+      return cb(err);
+    }
+    cb(null, user);
+  });
+};
 
 // 그 다음 이 스키마를 모델로 감싸준다고 하였다.
 

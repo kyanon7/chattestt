@@ -30,13 +30,19 @@ mongoose
   .then(() => console.log("MongoDB Connected..."))
   .catch((err) => console.log(err));
 
-app.get("/", (req, res) => res.send("Hello World!"));
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+  console.log(location.origin);
+});
 
 app.post("/register", (req, res) => {
   const user = new User(req.body);
-
+  
   user.save((err, userInfo) => {
-    if(err) return res.json({success: false, err});
+    if(err) return res.json({
+      success: false, err
+    });
+    
     return res.status(200).json({
       success: true
     });
@@ -44,6 +50,8 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+
+  const user = new User(req.body);
   
   User.findOne({ email: req.body.email }, (err, user) => {
     if(!user){
@@ -55,17 +63,25 @@ app.post("/login", (req, res) => {
   });
 
   user.comparePassword(req.body.password, (err, isMatch) => {
-    if(!isMatch) 
-      return res.json({loginSuccess: false, message: "비밀번호가 틀렸습니다."
 
-      user.generateToken((err, user) => {
-        if(err) return res.status(400).send(err);
-
-        res.cookie("x_auth", user.token).status(200).json({loginSuccess: true, userId: user._id});
-      })
-
+    if(!isMatch)
+      return res.json({
+        loginSuccess: false, 
+        message: "비밀번호가 틀렸습니다."
       });
+  
+    user.generateToken((err, user) => {
+      if(err) {
+        return res.status(400).send(err);
+      }
+      res.cookie("x_auth", user.token)
+        .status(200)
+        .json({
+          loginSuccess: true, 
+          userId: user._id});
+    });
   });
+  
 });
 
 app.listen(port, () =>
