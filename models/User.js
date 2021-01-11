@@ -90,6 +90,23 @@ userSchema.methods.generateToken = function(cb) {
   });
 };
 
+userSchema.statics.findByToken = function(token, cb){
+
+  var user = this;
+
+  jwt.verify(token, "secretToken", (err, decoded) => {
+    user.findOne({
+      "_id": decoded, 
+      "token": token}, 
+    (err, user) => {
+      if(err){
+        return cb(err);
+      }
+      cb(null, user);
+    });
+  });
+};
+
 // 그 다음 이 스키마를 모델로 감싸준다고 하였다.
 
 const User = mongoose.model("User", userSchema);
