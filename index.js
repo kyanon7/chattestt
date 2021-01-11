@@ -7,7 +7,8 @@ const {User} = require("./models/User");
 const app = express();
 const port = 3000;
 const corsOptions = {
-  origin: "*", // 허락하고자 하는 요청 주소
+  // origin: "*", // 허락하고자 하는 요청 주소
+  origin: "https://kingbam.postman.co",
   credentials: true // true로 하면 설정한 내용을 response 헤더에 추가 해줍니다.
 };
 
@@ -51,8 +52,6 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
 
-  const user = new User(req.body);
-  
   User.findOne({ email: req.body.email }, (err, user) => {
     if(!user){
       return res.json({
@@ -60,28 +59,27 @@ app.post("/login", (req, res) => {
         message: "제공된 이메일에 해당하는 유저가 없습니다."
       });
     }
-  });
 
-  user.comparePassword(req.body.password, (err, isMatch) => {
-
-    if(!isMatch)
-      return res.json({
-        loginSuccess: false, 
-        message: "비밀번호가 틀렸습니다."
+    user.comparePassword(req.body.password, (err, isMatch) => {
+      // console.log(user);
+      if(!isMatch)
+        return res.json({
+          loginSuccess: false, 
+          message: "비밀번호가 틀렸습니다."
+        });
+    
+      user.generateToken((err, user) => {
+        if(err) {
+          return res.status(400).send(err);
+        }
+        res.cookie("x_auth", user.token)
+          .status(200)
+          .json({
+            loginSuccess: true, 
+            userId: user._id});
       });
-  
-    user.generateToken((err, user) => {
-      if(err) {
-        return res.status(400).send(err);
-      }
-      res.cookie("x_auth", user.token)
-        .status(200)
-        .json({
-          loginSuccess: true, 
-          userId: user._id});
     });
   });
-  
 });
 
 app.listen(port, () =>
